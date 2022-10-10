@@ -25,8 +25,13 @@ setup(
     name="dwatch",
     version=version,
     packages=find_packages(),
+    include_package_data=True,
     python_requires="~=3.6",
-    install_requires=[],
+    install_requires=[
+        "Jinja2",
+        "yacl",
+    ],
+    extras_require={"colored_exceptions": ["pygments"]},
     entry_points={
         "console_scripts": [
             "dwatch = dwatch.cli:main",

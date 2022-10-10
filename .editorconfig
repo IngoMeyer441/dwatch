@@ -22,6 +22,6 @@ trim_trailing_whitespace = true
 [Makefile]
 indent_style = tab
 
-# 2 space indentation for YAML files
-[*.{yml,yaml}]
+# 2 space indentation for HTML and YAML files
+[*.{html,yml,yaml}]
 indent_size = 2
