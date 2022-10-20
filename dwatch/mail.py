@@ -1,5 +1,6 @@
 import logging
 import smtplib
+import subprocess
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum, auto
@@ -11,6 +12,11 @@ from .render import TemplateType, render_template
 MAIL_SUBJECT = "Change detected on watched command output"
 
 logger = logging.getLogger(__name__)
+
+
+class MailBackend(Enum):
+    SENDMAIL = auto()
+    SMTPLIB = auto()
 
 
 class MailEncryption(Enum):
@@ -33,6 +39,7 @@ def send_mail(
     command: str,
     original_text: CommandOutput,
     compare_text: CommandOutput,
+    mail_backend: MailBackend,
     from_address: str,
     to_addresses: Iterable[str],
     mail_server_url: str,
@@ -40,6 +47,46 @@ def send_mail(
     login_user: Optional[str] = None,
     login_password: Optional[str] = None,
 ) -> None:
+    def use_sendmail(message: MIMEMultipart) -> None:
+        logging.debug("Send mail with sendmail")
+        try:
+            subprocess.run(["/usr/sbin/sendmail", "-t", "-oi"], input=message.as_bytes(), check=True)
+        except subprocess.CalledProcessError as e:
+            raise MailError("Could not send mail.") from e
+
+    def use_smtplib(message: MIMEMultipart) -> None:
+        logging.debug('Send mail with Python\'s builtin smtplib, encryption: "%s"', encryption.name)
+        if encryption is MailEncryption.SSL:
+            smtp_class = smtplib.SMTP_SSL  # type: Type[smtplib.SMTP]
+            port = MailPorts.SSL
+        elif encryption is MailEncryption.STARTTLS:
+            smtp_class = smtplib.SMTP
+            port = MailPorts.STARTTLS
+        else:
+            smtp_class = smtplib.SMTP
+            port = MailPorts.PLAIN
+        server = smtp_class(mail_server_url, port)
+        try:
+            if encryption is MailEncryption.STARTTLS:
+                server.starttls()
+            # Do not send credentials without encryption
+            if encryption is not MailEncryption.NONE and login_user and login_password:
+                server.login(login_user, login_password)
+            else:
+                logging.warning(
+                    "No encryption is used for mail transfer. "
+                    "In this mode, no credentials are sent for security reasons."
+                )
+            server.send_message(message)
+            server.close()
+        except smtplib.SMTPException as e:
+            raise MailError("Could not send mail.") from e
+
+    backend_to_func = {
+        MailBackend.SENDMAIL: use_sendmail,
+        MailBackend.SMTPLIB: use_smtplib,
+    }
+
     message = MIMEMultipart("alternative")
     message["From"] = from_address
     message["To"] = ", ".join(to_addresses)
@@ -50,28 +97,5 @@ def send_mail(
     message_part_html = MIMEText(content_html, "html", _charset="utf-8")
     message.attach(message_part_plain)
     message.attach(message_part_html)
-    if encryption is MailEncryption.SSL:
-        smtp_class = smtplib.SMTP_SSL  # type: Type[smtplib.SMTP]
-        port = MailPorts.SSL
-    elif encryption is MailEncryption.STARTTLS:
-        smtp_class = smtplib.SMTP
-        port = MailPorts.STARTTLS
-    else:
-        smtp_class = smtplib.SMTP
-        port = MailPorts.PLAIN
-    server = smtp_class(mail_server_url, port)
-    try:
-        if encryption is MailEncryption.STARTTLS:
-            server.starttls()
-        # Do not send credentials without encryption
-        if encryption is not MailEncryption.NONE and login_user and login_password:
-            server.login(login_user, login_password)
-        else:
-            logging.warning(
-                "No encryption is used for mail transfer. "
-                "In this mode, no credentials are sent for security reasons."
-            )
-        server.send_message(message)
-        server.close()
-    except smtplib.SMTPException as e:
-        raise MailError("Could not send mail.") from e
+
+    backend_to_func[mail_backend](message)

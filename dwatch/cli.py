@@ -193,6 +193,7 @@ def handle_monitoring(args: argparse.Namespace) -> None:
                 args.command,
                 original_command_output,
                 compare_command_output,
+                config.mail_backend,
                 config.mail_from_address,
                 config.mail_to_addresses,
                 config.mail_server,

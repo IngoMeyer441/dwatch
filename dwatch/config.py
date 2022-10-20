@@ -3,9 +3,13 @@ from configparser import ConfigParser
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, TextIO, Union
 
-from .mail import MailEncryption
+from .mail import MailBackend, MailEncryption
 
 CONFIG_FILEPATH = "~/.dwatchrc"
+
+
+class UnknownMailBackendError(Exception):
+    pass
 
 
 class UnknownMailEncryptionError(Exception):
@@ -28,6 +32,7 @@ class Config:
     _default_config: Dict[str, Dict[str, Any]] = {
         "general": {"verbosity": "verbose"},
         "mail": {
+            "backend": "sendmail",
             "server": "mail.example.com",
             "login_user": "jane.doe",
             "login_password": "xxx",
@@ -76,6 +81,16 @@ class Config:
     def config_filepath(self) -> str:
         assert self._config_filepath is not None
         return self._config_filepath
+
+    @property
+    def mail_backend(self) -> MailBackend:
+        backend_string = self._config["mail"]["backend"]
+        if backend_string.upper() not in MailBackend.__dict__:
+            raise UnknownMailBackendError(
+                'The mail backend "{}" is unknown.'.format(backend_string)
+                + ' You can choose from "sendmail" or "smtplib".'
+            )
+        return MailBackend[backend_string.upper()]
 
     @property
     def mail_encryption(self) -> MailEncryption:
