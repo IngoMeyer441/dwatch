@@ -1,8 +1,54 @@
 import os
 import runpy
-from typing import Optional, cast
+import subprocess
+from distutils.cmd import Command
+from tempfile import TemporaryDirectory
+from typing import List, Optional, Tuple, cast
 
 from setuptools import find_packages, setup
+
+
+class PyinstallerCommand(Command):
+    description = "create a self-contained executable with PyInstaller"
+    user_options = []  # type: List[Tuple[str, Optional[str], str]]
+
+    def initialize_options(self) -> None:
+        pass
+
+    def finalize_options(self) -> None:
+        pass
+
+    def run(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            subprocess.check_call(["python3", "-m", "venv", os.path.join(temp_dir, "env")])
+            subprocess.check_call(
+                [os.path.join(temp_dir, "env/bin/pip"), "install", "--upgrade", "pip", "setuptools", "wheel"]
+            )
+            subprocess.check_call([os.path.join(temp_dir, "env/bin/pip"), "install", "."])
+            subprocess.check_call([os.path.join(temp_dir, "env/bin/pip"), "install", "pyinstaller"])
+            with open(os.path.join(temp_dir, "entrypoint.py"), "w") as f:
+                f.write(
+                    """
+#!/usr/bin/env python3
+
+from dwatch.cli import main
+
+
+if __name__ == "__main__":
+    main()
+                    """.strip()
+                )
+            subprocess.check_call(
+                [
+                    os.path.join(temp_dir, "env/bin/pyinstaller"),
+                    "--add-data={}{}{}".format(os.path.join("dwatch", "*.jinja.*"), os.pathsep, "dwatch"),
+                    "--clean",
+                    "--name=dwatch",
+                    "--onefile",
+                    "--strip",
+                    os.path.join(temp_dir, "entrypoint.py"),
+                ]
+            )
 
 
 def get_version_from_pyfile(version_file: str = "dwatch/_version.py") -> str:
@@ -37,6 +83,7 @@ setup(
             "dwatch = dwatch.cli:main",
         ]
     },
+    cmdclass={"bdist_pyinstaller": PyinstallerCommand},
     author="Ingo Meyer",
     author_email="i.meyer@fz-juelich.de",
     description="A tool to watch command output for differences and send notifications.",

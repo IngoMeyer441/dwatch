@@ -1,5 +1,7 @@
 stages:
 - check
+- build
+- deploy
 
 pre-commit:
   stage: check
@@ -30,3 +32,50 @@ pre-commit:
       >&2 echo "hooks in your local Git clone by running \`make git-hooks-install\`.";
       exit 1;
     }
+
+build-linux-executable:
+  stage: build
+  image: centos:7
+  before_script:
+  - yum install -y epel-release
+  - yum install -y python36-pip upx
+  script:
+  - python3 setup.py bdist_pyinstaller
+  - PLATFORM=$(python3 -c 'import platform; print("{}_{}".format(platform.system(), platform.machine()).lower())');
+    mv "dist/${CI_PROJECT_NAME}" "dist/${CI_PROJECT_NAME}_${PLATFORM}"
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - dist/
+
+build-macos-executable:
+  stage: build
+  image: macos:high-sierra-xcode-python3
+  tags:
+  - libvirt
+  script:
+  - python3 setup.py bdist_pyinstaller
+  - PLATFORM=$(python3 -c 'import platform; print("{}_{}".format(platform.system(), platform.machine()).lower())');
+    mv "dist/${CI_PROJECT_NAME}" "dist/${CI_PROJECT_NAME}_${PLATFORM}"
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - dist/
+
+pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+  - mkdir -p public
+  - for platform in darwin linux; do
+      cp -v "dist/${CI_PROJECT_NAME}_${platform}_x86_64" public/;
+    done
+  - echo "Self-contained executables can be downloaded from"
+  - for platform in darwin linux; do
+      echo "- ${CI_PAGES_URL}/${CI_PROJECT_NAME}_${platform}_x86_64";
+    done
+  artifacts:
+    paths:
+    - public
+  only:
+  - master@imeyer/dwatch
