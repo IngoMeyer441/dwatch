@@ -10,7 +10,7 @@ email with a diff view.
 dwatch is available on PyPI and can be installed with `pip`:
 
 ```bash
-python3 -m pip install vimtips
+python3 -m pip install dwatch
 ```
 
 At least Python 3.6 is required.
