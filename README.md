@@ -74,7 +74,7 @@ These options can be configured in the file `~/.dwatchrc`:
 
 - `[general]` section:
 
-  - `verbosity`: The logging level of the application. Can be one of `quiet`, `warn`, `verbose` or `debug`.
+  - `verbosity`: The logging level of the application. Can be one of `quiet`, `error`, `warn`, `verbose` or `debug`.
 
 - `[mail]` section:
 
