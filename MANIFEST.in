@@ -1,0 +1,4 @@
+include LICENSE
+include README.md
+include dwatch/report_template.jinja.html
+include dwatch/report_template.jinja.txt

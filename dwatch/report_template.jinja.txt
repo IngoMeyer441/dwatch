@@ -1,0 +1,13 @@
+### Diff report ###
+
+=== Command ===
+{{ command }}
+
+=== Command output differences ===
+{{ diff_lines }}
+
+=== Full previous command output ===
+{{ original_text }}
+
+=== Full current command output ===
+{{ compare_text }}

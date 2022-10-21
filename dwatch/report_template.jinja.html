@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title></title>
+  <style type="text/css">
+    body {
+      color: #333;
+      font-family: sans-serif;
+    }
+
+    h2 {
+      margin: 20px 0 10px 0;
+    }
+
+    table.diff {
+      border: 1px solid #333;
+      border-collapse: collapse;
+      font-family: monospace;
+      font-size: 14px;
+      background-color: #fafaff;
+    }
+
+    th, td {
+        padding: 0 5px;
+    }
+
+    .diff_header {
+      background-color: #e9e9f2;
+    }
+
+    td.diff_header {
+      text-align: right;
+    }
+
+    .diff_next {
+      background-color: #e9e9f2;
+    }
+
+    .diff_add {
+      background-color: #aaffaa;
+    }
+
+    .diff_chg {
+      background-color: #ffff77;
+    }
+
+    .diff_sub {
+      background-color: #ffaaaa;
+    }
+
+    pre {
+      background-color: #fafaff;
+      border: 1px solid #333;
+      counter-reset: line;
+      display: inline-grid;
+      font-family: monospace;
+      font-size: 14px;
+      gap: 0.3em;
+      grid-auto-rows: 1em;
+      grid-template-columns: max-content 1fr;
+      margin: 0;
+      padding: 15px;
+      white-space: pre-wrap;
+    }
+
+    pre .line-number {
+      counter-increment: line;
+      text-align: right;
+    }
+
+    pre .line-number:before {
+      border-right: 1px solid #ccc;
+      color: #666;
+      content: counter(line);
+      display: inline-block;
+      margin-right: 10px;
+      padding-right: 5px;
+      white-space: pre;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Diff report</h1>
+  <h2>Command</h2>
+  <pre>
+{%- for line in command.splitlines() -%}
+<span class="line-number"></span><code>{{- line -}}</code>
+{% endfor -%}
+</pre>
+  <h2>Command output differences</h2>
+  {{ diff_table }}
+  <h2>Full previous command output</h2>
+  <pre>
+{%- for line in original_text.splitlines() -%}
+<span class="line-number"></span><code>{{- line -}}</code>
+{% endfor -%}
+  </pre>
+  <h2>Full current command output</h2>
+  <pre>
+{%- for line in compare_text.splitlines() -%}
+<span class="line-number"></span><code>{{- line -}}</code>
+{% endfor -%}
+  </pre>
+</body>
+
+</html>
