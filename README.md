@@ -43,7 +43,7 @@ especially useful in cron jobs.
 Without `--stdout` the diff output is sent as an HTML email. By default, dwatch uses the `sendmail` tool for this, which
 is available if a local email server like Postfix or Exim is installed or if a simple mail forwarder like
 [ssmtp](https://packages.debian.org/stable/ssmtp) is present. As an alternative, dwatch supports direct communication
-with a mail server with Python's builtin [smptlib](https://docs.python.org/3/library/smtplib.html). This can be used if
+with a mail server with Python's builtin [smtplib](https://docs.python.org/3/library/smtplib.html). This can be used if
 no email server is installed locally. In either case, run
 
 ```bash
