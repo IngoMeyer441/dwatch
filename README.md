@@ -27,7 +27,7 @@ You can also download self-contained executables (no Python installation require
 
 ## Usage
 
-By default, dwatch runs a commmand passed on the command line every 2 seconds and notifies the user on any changes. You
+By default, dwatch runs a commmand passed on the command line every 60 seconds and notifies the user on any changes. You
 can run a first test with:
 
 ```bash
