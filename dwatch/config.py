@@ -56,7 +56,12 @@ class Config:
             if not os.path.exists(config_directory_path):
                 os.makedirs(config_directory_path)
             config_file: TextIO
-            with open(os.path.expanduser(config_filepath_or_file), "w", encoding="utf-8") as config_file:
+            with open(
+                os.path.expanduser(config_filepath_or_file),
+                "w",
+                encoding="utf-8",
+                opener=lambda path, flags: os.open(path, flags, 0o600),
+            ) as config_file:
                 default_config.write(config_file)
         else:
             config_file = config_filepath_or_file

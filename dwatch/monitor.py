@@ -52,7 +52,12 @@ def watch(
             "output": b64encode(zlib.compress(command_output.output.encode("utf-8"))).decode("utf-8"),
             "timestamp": command_output.timestamp,
         }
-        with open(ORIGINAL_COMMAND_OUTPUT_FILEPATH, "w", encoding="utf-8") as f:
+        with open(
+            ORIGINAL_COMMAND_OUTPUT_FILEPATH,
+            "w",
+            encoding="utf-8",
+            opener=lambda path, flags: os.open(path, flags, 0o600),
+        ) as f:
             json.dump(command_db, f)
 
     def interrupt_handler(sig: int, frame: Optional[FrameType]) -> None:

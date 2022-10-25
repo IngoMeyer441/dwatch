@@ -63,6 +63,7 @@ Default values for command line options are taken from the config file at "{}"
         "--interval",
         action="store",
         default=config.interval,
+        type=float,
         dest="interval",
         help='set the interval for the watched command (default: "%(default)s")',
     )
