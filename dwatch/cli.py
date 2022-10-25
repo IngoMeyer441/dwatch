@@ -99,38 +99,33 @@ Default values for command line options are taken from the config file at "{}"
         "-q",
         "--quiet",
         action="store_true",
-        default=config.verbosity is Verbosity.QUIET,
         dest="quiet",
-        help='be quiet (default: "%(default)s")',
+        help='be quiet (default: "{}")'.format(config.verbosity is Verbosity.QUIET),
     )
     verbosity_group.add_argument(
         "--error",
         action="store_true",
-        default=config.verbosity is Verbosity.ERROR,
         dest="error",
-        help='print error messages (default: "%(default)s")',
+        help='print error messages (default: "{}")'.format(config.verbosity is Verbosity.ERROR),
     )
     verbosity_group.add_argument(
         "--warn",
         action="store_true",
-        default=config.verbosity is Verbosity.WARN,
         dest="warn",
-        help='print warning and error messages (default: "%(default)s")',
+        help='print warning and error messages (default: "{}")'.format(config.verbosity is Verbosity.WARN),
     )
     verbosity_group.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        default=config.verbosity is Verbosity.VERBOSE,
         dest="verbose",
-        help='be verbose (default: "%(default)s")',
+        help='be verbose (default: "{}")'.format(config.verbosity is Verbosity.VERBOSE),
     )
     verbosity_group.add_argument(
         "--debug",
         action="store_true",
-        default=config.verbosity is Verbosity.DEBUG,
         dest="debug",
-        help='print debug messages (default: "%(default)s")',
+        help='print debug messages (default: "{}")'.format(config.verbosity is Verbosity.DEBUG),
     )
     parser.add_argument("command", nargs="?", help="the command to watch")
     return parser
