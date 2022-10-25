@@ -2,6 +2,8 @@
 
 ## Overview
 
+![example_report](https://raw.githubusercontent.com/IngoMeyer441/dwatch/master/example_report.png)
+
 dwatch (*diff watch*) is a tool to monitor the output of a given command and notify the user on changes by sending an
 email with a diff view.
 
@@ -10,7 +12,7 @@ email with a diff view.
 dwatch is available on PyPI and can be installed with `pip`:
 
 ```bash
-python3 -m pip install vimtips
+python3 -m pip install dwatch
 ```
 
 At least Python 3.6 is required.
@@ -27,7 +29,7 @@ You can also download self-contained executables (no Python installation require
 
 ## Usage
 
-By default, dwatch runs a commmand passed on the command line every 2 seconds and notifies the user on any changes. You
+By default, dwatch runs a commmand passed on the command line every 60 seconds and notifies the user on any changes. You
 can run a first test with:
 
 ```bash
@@ -43,7 +45,7 @@ especially useful in cron jobs.
 Without `--stdout` the diff output is sent as an HTML email. By default, dwatch uses the `sendmail` tool for this, which
 is available if a local email server like Postfix or Exim is installed or if a simple mail forwarder like
 [ssmtp](https://packages.debian.org/stable/ssmtp) is present. As an alternative, dwatch supports direct communication
-with a mail server with Python's builtin [smptlib](https://docs.python.org/3/library/smtplib.html). This can be used if
+with a mail server with Python's builtin [smtplib](https://docs.python.org/3/library/smtplib.html). This can be used if
 no email server is installed locally. In either case, run
 
 ```bash
@@ -74,7 +76,7 @@ These options can be configured in the file `~/.dwatchrc`:
 
 - `[general]` section:
 
-  - `verbosity`: The logging level of the application. Can be one of `quiet`, `warn`, `verbose` or `debug`.
+  - `verbosity`: The logging level of the application. Can be one of `quiet`, `error`, `warn`, `verbose` or `debug`.
 
 - `[mail]` section:
 
