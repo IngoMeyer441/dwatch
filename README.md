@@ -2,6 +2,8 @@
 
 ## Overview
 
+![example_report](https://raw.githubusercontent.com/IngoMeyer441/dwatch/master/example_report.png)
+
 dwatch (*diff watch*) is a tool to monitor the output of a given command and notify the user on changes by sending an
 email with a diff view.
 
