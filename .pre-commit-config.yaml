@@ -58,7 +58,7 @@ repos:
       '--config-data={extends: default, rules: {indentation: {indent-sequences: consistent}, line-length: {max: 120}}}'
     ]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.18.3
+  rev: 0.18.4
   hooks:
   - id: check-jsonschema
     name: 'Validate GitLab CI configuration'
@@ -68,12 +68,12 @@ repos:
       'https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json',
     ]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.18.3
+  rev: 0.18.4
   hooks:
   - id: check-github-workflows
 # Python specific repos:
-- repo: https://github.com/myint/rstcheck
-  rev: main
+- repo: https://github.com/rstcheck/rstcheck
+  rev: v6.1.0
   hooks:
   - id: rstcheck
 - repo: https://github.com/psf/black
