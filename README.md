@@ -48,9 +48,6 @@ is available if a local email server like Postfix or Exim is installed or if a s
 with a mail server with Python's builtin [smtplib](https://docs.python.org/3/library/smtplib.html). This can be used if
 no email server is installed locally. In either case, run
 
-Use the `--description` option with a text argument to add a description to the diff report and the subject field of
-emails. This can be useful to distinguish different commands.
-
 ```bash
 dwatch --write-default-config
 ```
@@ -72,6 +69,9 @@ to_addresses = admin@example.com
 Change `sendmail` to `smtplib` to use an arbitrary email provider and set the server address, the login credentials and
 the encryption (`none`, `starttls` or `ssl`). If `none` is chosen, no login credentials are sent for security reasons.
 This can only be used for very simple mail server setups.
+
+Use the `--description` command line option with a text argument to add a description to the diff report and the subject
+field of emails. This can be useful to distinguish different commands.
 
 ## Configuration
 
