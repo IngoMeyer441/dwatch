@@ -59,7 +59,7 @@ def send_mail(
     def use_smtplib(message: MIMEMultipart) -> None:
         logging.debug('Send mail with Python\'s builtin smtplib, encryption: "%s"', encryption.name)
         if encryption is MailEncryption.SSL:
-            smtp_class = smtplib.SMTP_SSL  # type: Type[smtplib.SMTP]
+            smtp_class: Type[smtplib.SMTP] = smtplib.SMTP_SSL
             port = MailPorts.SSL
         elif encryption is MailEncryption.STARTTLS:
             smtp_class = smtplib.SMTP

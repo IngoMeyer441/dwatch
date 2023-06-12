@@ -10,7 +10,7 @@ from setuptools import find_packages, setup
 
 class PyinstallerCommand(Command):
     description = "create a self-contained executable with PyInstaller"
-    user_options = []  # type: List[Tuple[str, Optional[str], str]]
+    user_options: List[Tuple[str, Optional[str], str]] = []
 
     def initialize_options(self) -> None:
         pass
