@@ -48,6 +48,9 @@ is available if a local email server like Postfix or Exim is installed or if a s
 with a mail server with Python's builtin [smtplib](https://docs.python.org/3/library/smtplib.html). This can be used if
 no email server is installed locally. In either case, run
 
+Use the `--description` option with a text argument to add a description to the diff report and the subject field of
+emails. This can be useful to distinguish different commands.
+
 ```bash
 dwatch --write-default-config
 ```
@@ -103,8 +106,8 @@ These options can be configured in the file `~/.dwatchrc`:
 ## Command line options
 
 ```text
-usage: dwatch [-h] [-i INTERVAL] [-o | -O] [-s | -S] [--stdout] [-V] [-w]
-              [-q | --error | --warn | -v | --debug]
+usage: dwatch [-h] [-d DESCRIPTION] [-i INTERVAL] [-o | -O] [-s | -S]
+              [--stdout] [-V] [-w] [-q | --error | --warn | -v | --debug]
               [command]
 
 dwatch is a tool for watching command output for changes and notifiying the
@@ -116,9 +119,12 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -d DESCRIPTION, --description DESCRIPTION
+                        add a description which is added to the diff output
+                        and used in the e-mail subject
   -i INTERVAL, --interval INTERVAL
                         set the interval for the watched command (default:
-                        "2.0")
+                        "60.0")
   -o, --run-once        run the given command once and exit (default: "False")
   -O, --no-run-once     don't run the given command once and exit (default:
                         "True")

@@ -2,6 +2,7 @@ import logging
 import os
 from difflib import HtmlDiff, unified_diff
 from enum import Enum, auto
+from typing import Optional
 
 import jinja2
 
@@ -27,6 +28,7 @@ def render_template(
     command: str,
     original_command_output: CommandOutput,
     compare_command_output: CommandOutput,
+    description: Optional[str] = None,
 ) -> str:
     template = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__))).get_template(
         HTML_TEMPLATE_FILENAME if template_type is TemplateType.HTML else PLAIN_TEMPLATE_FILENAME
@@ -35,6 +37,7 @@ def render_template(
         "command": command.strip(),
         "original_text": original_command_output.output.rstrip(),
         "compare_text": compare_command_output.output.rstrip(),
+        "description": description,
     }
     if template_type is TemplateType.HTML:
         logging.debug("Render HTML diff")
