@@ -1,5 +1,10 @@
 ### Diff report ###
 
+{% if description is not none -%}
+=== Description ===
+{{ description }}
+
+{% endif -%}
 === Command ===
 {{ command }}
 

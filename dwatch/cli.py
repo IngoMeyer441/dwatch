@@ -59,6 +59,13 @@ Default values for command line options are taken from the config file at "{}"
         ),
     )
     parser.add_argument(
+        "-d",
+        "--description",
+        action="store",
+        dest="description",
+        help="add a description which is added to the diff output and used in the e-mail subject",
+    )
+    parser.add_argument(
         "-i",
         "--interval",
         action="store",
@@ -179,7 +186,7 @@ def handle_monitoring(args: argparse.Namespace) -> None:
         if args.print_on_stdout:
             logger.info("Write command diff to stdout:")
             report_plain = render_template(
-                TemplateType.PLAIN, args.command, original_command_output, compare_command_output
+                TemplateType.PLAIN, args.command, original_command_output, compare_command_output, args.description
             )
             print(report_plain)
             print()
@@ -196,6 +203,7 @@ def handle_monitoring(args: argparse.Namespace) -> None:
                 config.mail_encryption,
                 config.mail_login_user,
                 config.mail_login_password,
+                args.description,
             )
 
 

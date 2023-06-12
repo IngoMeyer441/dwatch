@@ -85,6 +85,10 @@
 
 <body>
   <h1>Diff report</h1>
+  {% if description is not none -%}
+  <h2>Description</h2>
+  <p>{{ description }}</p>
+  {% endif -%}
   <h2>Command</h2>
   <pre>
 {%- for line in command.splitlines() -%}

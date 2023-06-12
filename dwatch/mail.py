@@ -9,7 +9,8 @@ from typing import Iterable, Optional, Type
 from .monitor import CommandOutput
 from .render import TemplateType, render_template
 
-MAIL_SUBJECT = "Change detected on watched command output"
+MAIL_SUBJECT_WITH_DESCRIPTION = "{description:s}: change detected"
+MAIL_SUBJECT_WITHOUT_DESCRIPTION = "Change detected on watched command output"
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ def send_mail(
     encryption: MailEncryption,
     login_user: Optional[str] = None,
     login_password: Optional[str] = None,
+    command_description: Optional[str] = None,
 ) -> None:
     def use_sendmail(message: MIMEMultipart) -> None:
         logging.debug("Send mail with sendmail")
@@ -57,7 +59,7 @@ def send_mail(
     def use_smtplib(message: MIMEMultipart) -> None:
         logging.debug('Send mail with Python\'s builtin smtplib, encryption: "%s"', encryption.name)
         if encryption is MailEncryption.SSL:
-            smtp_class = smtplib.SMTP_SSL  # type: Type[smtplib.SMTP]
+            smtp_class: Type[smtplib.SMTP] = smtplib.SMTP_SSL
             port = MailPorts.SSL
         elif encryption is MailEncryption.STARTTLS:
             smtp_class = smtplib.SMTP
@@ -90,9 +92,12 @@ def send_mail(
     message = MIMEMultipart("alternative")
     message["From"] = from_address
     message["To"] = ", ".join(to_addresses)
-    message["Subject"] = MAIL_SUBJECT
-    content_plain = render_template(TemplateType.PLAIN, command, original_text, compare_text)
-    content_html = render_template(TemplateType.HTML, command, original_text, compare_text)
+    if command_description is None:
+        message["Subject"] = MAIL_SUBJECT_WITHOUT_DESCRIPTION
+    else:
+        message["Subject"] = MAIL_SUBJECT_WITH_DESCRIPTION.format(description=command_description)
+    content_plain = render_template(TemplateType.PLAIN, command, original_text, compare_text, command_description)
+    content_html = render_template(TemplateType.HTML, command, original_text, compare_text, command_description)
     message_part_plain = MIMEText(content_plain, "plain", _charset="utf-8")
     message_part_html = MIMEText(content_html, "html", _charset="utf-8")
     message.attach(message_part_plain)
