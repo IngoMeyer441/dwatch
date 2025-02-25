@@ -36,10 +36,10 @@ pre-commit:
 
 build-linux-executable:
   stage: build
-  image: centos:7
+  image: rockylinux:8
   before_script:
-  - yum install -y epel-release
-  - yum install -y python36-pip upx
+  - dnf install -y epel-release
+  - dnf install -y python39-pip upx
   script:
   - python3 setup.py bdist_pyinstaller
   - PLATFORM=$(python3 -c 'import platform; print("{}_{}".format(platform.system(), platform.machine()).lower())');
