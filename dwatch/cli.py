@@ -3,8 +3,10 @@ import logging
 import os
 import shlex
 import sys
+from tempfile import gettempdir
 from typing import Optional
 
+from filelock import FileLock, Timeout
 from yacl import setup_colored_stderr_logging
 
 try:
@@ -20,7 +22,14 @@ from .mail import MailError, send_mail
 from .monitor import watch
 from .render import TemplateType, render_template
 
+LOCK_FILENAME = "dwatch.lock"
+
+
 logger = logging.getLogger(__name__)
+
+
+class LockTimeoutError(Exception):
+    pass
 
 
 def get_argumentparser() -> argparse.ArgumentParser:
@@ -73,6 +82,12 @@ Default values for command line options are taken from the config file at "{}"
         type=float,
         dest="interval",
         help='set the interval for the watched command (default: "%(default)s")',
+    )
+    add_bool_argument(
+        parser,
+        "l",
+        "wait-for-lock",
+        help="block until other instances of dwatch are done",
     )
     add_bool_argument(
         parser,
@@ -147,15 +162,19 @@ def parse_arguments() -> argparse.Namespace:
     args.verbosity_level = (
         Verbosity.QUIET
         if args.quiet
-        else Verbosity.ERROR
-        if args.error
-        else Verbosity.WARN
-        if args.warn
-        else Verbosity.VERBOSE
-        if args.verbose
-        else Verbosity.DEBUG
-        if args.debug
-        else config.verbosity
+        else (
+            Verbosity.ERROR
+            if args.error
+            else (
+                Verbosity.WARN
+                if args.warn
+                else Verbosity.VERBOSE
+                if args.verbose
+                else Verbosity.DEBUG
+                if args.debug
+                else config.verbosity
+            )
+        )
     )
     if args.write_default_config:
         return args
@@ -186,35 +205,49 @@ def handle_monitoring(args: argparse.Namespace) -> None:
         command = [args.command]
     else:
         command = shlex.split(args.command)
-    for original_command_output, compare_command_output in watch(command, args.shell, args.run_once, args.interval):
-        if args.print_on_stdout:
-            logger.info("Write command diff to stdout:")
-            report_plain = render_template(
-                TemplateType.PLAIN, args.command, original_command_output, compare_command_output, args.description
-            )
-            print(report_plain)
-            print()
-        else:
-            logger.info("Generate an HTML diff and send a mail")
-            send_mail(
-                args.command,
-                original_command_output,
-                compare_command_output,
-                config.mail_backend,
-                config.mail_from_address,
-                config.mail_to_addresses,
-                config.mail_server,
-                config.mail_encryption,
-                config.mail_login_user,
-                config.mail_login_password,
-                args.description,
-            )
+    try:
+        with FileLock(os.path.join(gettempdir(), LOCK_FILENAME), blocking=args.wait_for_lock):
+            for original_command_output, compare_command_output in watch(
+                command,
+                args.shell,
+                args.run_once,
+                args.interval,
+            ):
+                if args.print_on_stdout:
+                    logger.info("Write command diff to stdout:")
+                    report_plain = render_template(
+                        TemplateType.PLAIN,
+                        args.command,
+                        original_command_output,
+                        compare_command_output,
+                        args.description,
+                    )
+                    print(report_plain)
+                    print()
+                else:
+                    logger.info("Generate an HTML diff and send a mail")
+                    send_mail(
+                        args.command,
+                        original_command_output,
+                        compare_command_output,
+                        config.mail_backend,
+                        config.mail_from_address,
+                        config.mail_to_addresses,
+                        config.mail_server,
+                        config.mail_encryption,
+                        config.mail_login_user,
+                        config.mail_login_password,
+                        args.description,
+                    )
+    except Timeout as e:
+        raise LockTimeoutError("Another instance of this application is already running.") from e
 
 
 def main() -> None:
     expected_exceptions = (
         argparse.ArgumentError,
         MailError,
+        LockTimeoutError,
     )
     try:
         args = parse_arguments()

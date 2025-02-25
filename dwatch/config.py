@@ -30,7 +30,10 @@ class Verbosity(Enum):
 
 class Config:
     _default_config: Dict[str, Dict[str, Any]] = {
-        "general": {"verbosity": "verbose"},
+        "general": {
+            "wait_for_lock": True,
+            "verbosity": "verbose",
+        },
         "mail": {
             "backend": "sendmail",
             "server": "mail.example.com",
@@ -148,6 +151,10 @@ class Config:
     @property
     def shell(self) -> bool:
         return self._config["watch"].getboolean("shell")
+
+    @property
+    def wait_for_lock(self) -> bool:
+        return self._config["general"].getboolean("wait_for_lock")
 
 
 config = Config()

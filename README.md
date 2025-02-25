@@ -106,8 +106,8 @@ These options can be configured in the file `~/.dwatchrc`:
 ## Command line options
 
 ```text
-usage: dwatch [-h] [-d DESCRIPTION] [-i INTERVAL] [-o | -O] [-s | -S]
-              [--stdout] [-V] [-w] [-q | --error | --warn | -v | --debug]
+usage: dwatch [-h] [-d DESCRIPTION] [-i INTERVAL] [-l | -L] [-o | -O] [-s |
+              -S] [--stdout] [-V] [-w] [-q | --error | --warn | -v | --debug]
               [command]
 
 dwatch is a tool for watching command output for changes and notifiying the
@@ -119,12 +119,17 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -d DESCRIPTION, --description DESCRIPTION
+  -d, --description DESCRIPTION
                         add a description which is added to the diff output
                         and used in the e-mail subject
-  -i INTERVAL, --interval INTERVAL
+  -i, --interval INTERVAL
                         set the interval for the watched command (default:
                         "60.0")
+  -l, --wait-for-lock   block until other instances of dwatch are done
+                        (default: "True")
+  -L, --no-wait-for-lock
+                        don't block until other instances of dwatch are done
+                        (default: "False")
   -o, --run-once        run the given command once and exit (default: "False")
   -O, --no-run-once     don't run the given command once and exit (default:
                         "True")
