@@ -15,7 +15,7 @@ dwatch is available on PyPI and can be installed with `pip`:
 python3 -m pip install dwatch
 ```
 
-At least Python 3.6 is required.
+At least Python 3.9 is required.
 
 If you run an Arch-based system, you can also install `dwatch` from the
 [AUR](https://aur.archlinux.org/packages/dwatch/):
