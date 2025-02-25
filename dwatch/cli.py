@@ -157,6 +157,10 @@ def parse_arguments() -> argparse.Namespace:
         if args.debug
         else config.verbosity
     )
+    if args.write_default_config:
+        return args
+    if args.command is None:
+        raise argparse.ArgumentError(None, "No command given")
     return args
 
 
@@ -208,7 +212,10 @@ def handle_monitoring(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    expected_exceptions = (MailError,)
+    expected_exceptions = (
+        argparse.ArgumentError,
+        MailError,
+    )
     try:
         args = parse_arguments()
         if args.print_version:
