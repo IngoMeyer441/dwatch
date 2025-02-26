@@ -24,8 +24,8 @@ If you run an Arch-based system, you can also install `dwatch` from the
 yay -S dwatch
 ```
 
-You can also download self-contained executables (no Python installation required) for Linux x64 and macOS x64 from the
-[releases page](https://github.com/IngoMeyer441/dwatch/releases).
+You can also download self-contained executables (no Python installation required) for Linux x64, macOS x64 and macOS
+ARM64 from the [releases page](https://github.com/IngoMeyer441/dwatch/releases).
 
 ## Usage
 
