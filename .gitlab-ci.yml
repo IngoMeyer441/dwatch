@@ -7,6 +7,14 @@ stages:
 pre-commit:
   stage: check
   image: python:3
+  variables:
+    GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${CI_PROJECT_NAME}"
+    PIP_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/pip"
+    PRE_COMMIT_HOME: "${CI_PROJECT_DIR}/.cache/pre-commit"
+  cache:
+    key: pre-commit
+    paths:
+    - .cache
   before_script:
   - pip install "pre-commit==3.3.2"
   script:
@@ -36,10 +44,10 @@ pre-commit:
 
 build-linux-executable:
   stage: build
-  image: centos:7
+  image: rockylinux:8
   before_script:
-  - yum install -y epel-release
-  - yum install -y python36-pip upx
+  - dnf install -y epel-release
+  - dnf install -y python39-pip upx
   script:
   - python3 setup.py bdist_pyinstaller
   - PLATFORM=$(python3 -c 'import platform; print("{}_{}".format(platform.system(), platform.machine()).lower())');
@@ -49,11 +57,43 @@ build-linux-executable:
     paths:
     - dist/
 
-build-macos-executable:
+build-macos-x64-executable:
   stage: build
-  image: macos:catalina-xcode-python3
+  image: macos:catalina-xcode
+  variables:
+    PYTHON_VERSION: "3.13.2"
   tags:
   - libvirt
+  before_script:
+  - curl -fLO "https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macos11.pkg"
+  - sudo installer -pkg "python-${PYTHON_VERSION}-macos11.pkg" -target /
+  - python3 -m pip install -U
+      pip
+      setuptools
+      wheel
+  script:
+  - python3 setup.py bdist_pyinstaller
+  - PLATFORM=$(python3 -c 'import platform; print("{}_{}".format(platform.system(), platform.machine()).lower())');
+    mv "dist/${CI_PROJECT_NAME}" "dist/${CI_PROJECT_NAME}_${PLATFORM}"
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - dist/
+
+build-macos-arm64-executable:
+  stage: build
+  image: macos:sonoma-xcode
+  variables:
+    PYTHON_VERSION: "3.13.2"
+  tags:
+  - utm
+  before_script:
+  - curl -fLO "https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macos11.pkg"
+  - sudo installer -pkg "python-${PYTHON_VERSION}-macos11.pkg" -target /
+  - python3 -m pip install -U
+      pip
+      setuptools
+      wheel
   script:
   - python3 setup.py bdist_pyinstaller
   - PLATFORM=$(python3 -c 'import platform; print("{}_{}".format(platform.system(), platform.machine()).lower())');
@@ -68,13 +108,13 @@ pages:
   image: alpine:latest
   script:
   - mkdir -p public
-  - for platform in darwin linux; do
-      cp -v "dist/${CI_PROJECT_NAME}_${platform}_x86_64" public/;
-    done
-  - echo "Self-contained executables can be downloaded from"
-  - for platform in darwin linux; do
-      echo "- ${CI_PAGES_URL}/${CI_PROJECT_NAME}_${platform}_x86_64";
-    done
+  - cp -v "dist/${CI_PROJECT_NAME}_linux_x86_64" public/
+  - cp -v "dist/${CI_PROJECT_NAME}_darwin_x86_64" public/
+  - cp -v "dist/${CI_PROJECT_NAME}_darwin_arm64" public/
+  - echo "Self-contained executables can be downloaded from";
+    echo "- ${CI_PAGES_URL}/${CI_PROJECT_NAME}_linux_x86_64";
+    echo "- ${CI_PAGES_URL}/${CI_PROJECT_NAME}_darwin_x86_64";
+    echo "- ${CI_PAGES_URL}/${CI_PROJECT_NAME}_darwin_arm64"
   artifacts:
     paths:
     - public
@@ -118,9 +158,9 @@ deploy-to-pypi:
     echo "[pypi]"                        >> ~/.pypirc;
     echo "username = __token__"          >> ~/.pypirc;
     echo "password = ${PYPI_DEPLOY_KEY}" >> ~/.pypirc;
-  - python setup.py sdist
-  - python setup.py bdist_wheel
-  - twine upload dist/*.tar.gz dist/*.whl
+  - pip install build twine
+  - python -m build
+  - python -m twine upload dist/*.tar.gz dist/*.whl
 
 deploy-to-aur:
   stage: deploy-to-aur

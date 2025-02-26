@@ -15,7 +15,7 @@ dwatch is available on PyPI and can be installed with `pip`:
 python3 -m pip install dwatch
 ```
 
-At least Python 3.6 is required.
+At least Python 3.9 is required.
 
 If you run an Arch-based system, you can also install `dwatch` from the
 [AUR](https://aur.archlinux.org/packages/dwatch/):
@@ -24,8 +24,8 @@ If you run an Arch-based system, you can also install `dwatch` from the
 yay -S dwatch
 ```
 
-You can also download self-contained executables (no Python installation required) for Linux x64 and macOS x64 from the
-[releases page](https://github.com/IngoMeyer441/dwatch/releases).
+You can also download self-contained executables (no Python installation required) for Linux x64, macOS x64 and macOS
+ARM64 from the [releases page](https://github.com/IngoMeyer441/dwatch/releases).
 
 ## Usage
 
@@ -48,9 +48,6 @@ is available if a local email server like Postfix or Exim is installed or if a s
 with a mail server with Python's builtin [smtplib](https://docs.python.org/3/library/smtplib.html). This can be used if
 no email server is installed locally. In either case, run
 
-Use the `--description` option with a text argument to add a description to the diff report and the subject field of
-emails. This can be useful to distinguish different commands.
-
 ```bash
 dwatch --write-default-config
 ```
@@ -72,6 +69,9 @@ to_addresses = admin@example.com
 Change `sendmail` to `smtplib` to use an arbitrary email provider and set the server address, the login credentials and
 the encryption (`none`, `starttls` or `ssl`). If `none` is chosen, no login credentials are sent for security reasons.
 This can only be used for very simple mail server setups.
+
+Use the `--description` command line option with a text argument to add a description to the diff report and the subject
+field of emails. This can be useful to distinguish different commands.
 
 ## Configuration
 
@@ -106,8 +106,8 @@ These options can be configured in the file `~/.dwatchrc`:
 ## Command line options
 
 ```text
-usage: dwatch [-h] [-d DESCRIPTION] [-i INTERVAL] [-o | -O] [-s | -S]
-              [--stdout] [-V] [-w] [-q | --error | --warn | -v | --debug]
+usage: dwatch [-h] [-d DESCRIPTION] [-i INTERVAL] [-l | -L] [-o | -O] [-s |
+              -S] [--stdout] [-V] [-w] [-q | --error | --warn | -v | --debug]
               [command]
 
 dwatch is a tool for watching command output for changes and notifiying the
@@ -119,12 +119,17 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -d DESCRIPTION, --description DESCRIPTION
+  -d, --description DESCRIPTION
                         add a description which is added to the diff output
                         and used in the e-mail subject
-  -i INTERVAL, --interval INTERVAL
+  -i, --interval INTERVAL
                         set the interval for the watched command (default:
                         "60.0")
+  -l, --wait-for-lock   block until other instances of dwatch are done
+                        (default: "True")
+  -L, --no-wait-for-lock
+                        don't block until other instances of dwatch are done
+                        (default: "False")
   -o, --run-once        run the given command once and exit (default: "False")
   -O, --no-run-once     don't run the given command once and exit (default:
                         "True")

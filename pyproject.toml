@@ -1,0 +1,51 @@
+[project]
+name = "dwatch"
+description = "A tool to watch command output for differences and send notifications."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+keywords = ["administration", "monitoring"]
+authors = [
+    {name = "Ingo Meyer", email = "i.meyer@fz-juelich.de" }
+]
+maintainers = [
+    {name = "Ingo Meyer", email = "i.meyer@fz-juelich.de" }
+]
+classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Intended Audience :: System Administrators",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+        "Topic :: System :: Systems Administration",
+        "Topic :: Utilities",
+]
+dependencies = [
+    "filelock",
+    "Jinja2",
+    "yacl[colored_exceptions]",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/IngoMeyer441/dwatch"
+
+[project.scripts]
+dwatch = "dwatch.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "dwatch._version.__version__"}
