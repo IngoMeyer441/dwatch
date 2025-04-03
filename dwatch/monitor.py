@@ -4,7 +4,8 @@ import os
 import signal
 import zlib
 from base64 import b64decode, b64encode
-from subprocess import check_output
+from enum import Flag, auto
+from subprocess import run
 from time import sleep
 from types import FrameType
 from typing import Generator, NamedTuple, Optional, Sequence, Tuple
@@ -13,8 +14,34 @@ DEFAULT_INTERVAL = 60.0  # seconds
 ORIGINAL_COMMAND_OUTPUT_FILEPATH = os.path.expanduser("~/.dwatch_command_output.json")
 
 
+class UnknownCaptureStreamError(Exception):
+    pass
+
+
 class Interrupt(Exception):
     pass
+
+
+class CaptureStream(Flag):
+    STDOUT = auto()
+    STDERR = auto()
+
+    @classmethod
+    def from_text(cls, text: str) -> "CaptureStream":
+        flag = cls(0)
+        for text_flag in text.split(","):
+            try:
+                flag |= cls[text_flag.upper()]
+            except KeyError as e:
+                raise UnknownCaptureStreamError(
+                    'The capture stream "{}" is unknown.'.format(text_flag)
+                    + ' You can choose from "stdout" or "stderr" or combine them with ",".'
+                ) from e
+        return flag
+
+    @property
+    def text(self) -> str:
+        return ','.join(flag.name.lower() for flag in self)
 
 
 class CommandOutput(NamedTuple):
@@ -27,6 +54,9 @@ def watch(
     shell: bool = False,
     once: bool = True,
     interval: float = DEFAULT_INTERVAL,
+    capture: CaptureStream = CaptureStream.STDOUT | CaptureStream.STDERR,
+    ignore_output_on_error: bool = False,
+    abort_on_error: bool = False,
 ) -> Generator[Tuple[CommandOutput, CommandOutput], None, None]:
     def get_original_output() -> Optional[CommandOutput]:
         original_output: Optional[CommandOutput] = None
@@ -69,13 +99,26 @@ def watch(
     try:
         original_output = get_original_output()
         while True:
-            current_output = CommandOutput(
-                check_output(command, shell=shell, universal_newlines=True), datetime.datetime.now().isoformat()
+            command_result = run(
+                command,
+                capture_output=True,
+                check=abort_on_error,
+                shell=shell,
+                text=True,
             )
-            if original_output is None or current_output.output != original_output.output:
-                if original_output is not None:
-                    yield original_output, current_output
-                original_output = current_output
+            if command_result.returncode == 0 or not ignore_output_on_error:
+                current_output = CommandOutput(
+                    (
+                        command_result.stdout + command_result.stderr
+                        if CaptureStream.STDOUT in capture and CaptureStream.STDERR in capture
+                        else command_result.stderr if CaptureStream.STDERR in capture else command_result.stdout
+                    ),
+                    datetime.datetime.now().isoformat(),
+                )
+                if original_output is None or current_output.output != original_output.output:
+                    if original_output is not None:
+                        yield original_output, current_output
+                    original_output = current_output
             if once:
                 break
             sleep(interval)

@@ -4,6 +4,7 @@ from enum import Enum, auto
 from typing import Any, Dict, List, Optional, TextIO, Union
 
 from .mail import MailBackend, MailEncryption
+from .monitor import CaptureStream, UnknownCaptureStreamError
 
 CONFIG_FILEPATH = "~/.dwatchrc"
 
@@ -44,6 +45,9 @@ class Config:
             "to_addresses": "admin@example.com",
         },
         "watch": {
+            "abort_on_error": False,
+            "capture": "stdout,stderr",
+            "ignore_output_on_error": False,
             "interval": 60.0,
             "run_once": False,
             "shell": False,
@@ -139,6 +143,27 @@ class Config:
                 + ' You can choose from "quiet", "error", "warn", "verbose" or "debug".'
             )
         return Verbosity[verbosity_string.upper()]
+
+    @property
+    def abort_on_error(self) -> bool:
+        return self._config["watch"].getboolean("abort_on_error")
+
+    @property
+    def capture(self) -> CaptureStream:
+        capture_string_list = self._config["watch"]["capture"]
+        capture = CaptureStream(0)
+        for capture_string in capture_string_list.split(","):
+            if capture_string.upper() not in CaptureStream.__dict__:
+                raise UnknownCaptureStreamError(
+                    'The capture stream "{}" is unknown.'.format(capture_string)
+                    + ' You can choose from "stdout" or "stderr" or combine them with ",".'
+                )
+            capture |= CaptureStream[capture_string.upper()]
+        return capture
+
+    @property
+    def ignore_output_on_error(self) -> bool:
+        return self._config["watch"].getboolean("ignore_output_on_error")
 
     @property
     def interval(self) -> float:

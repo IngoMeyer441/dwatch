@@ -8,6 +8,7 @@ from typing import Optional
 
 from filelock import FileLock, Timeout
 from yacl import setup_colored_stderr_logging
+from subprocess import CalledProcessError
 
 try:
     from yacl import setup_colored_exceptions
@@ -17,9 +18,18 @@ except ImportError:
     has_setup_colored_exceptions = False
 
 from . import __version__
-from .config import CONFIG_FILEPATH, Config, Verbosity, config
+from .config import (
+    CONFIG_FILEPATH,
+    Config,
+    UnknownCaptureStreamError,
+    UnknownMailBackendError,
+    UnknownMailEncryptionError,
+    UnknownVerbosityLevelError,
+    Verbosity,
+    config,
+)
 from .mail import MailError, send_mail
-from .monitor import watch
+from .monitor import CaptureStream, UnknownCaptureStreamError, watch
 from .render import TemplateType, render_template
 
 LOCK_FILENAME = "dwatch.lock"
@@ -65,6 +75,23 @@ def get_argumentparser() -> argparse.ArgumentParser:
 Default values for command line options are taken from the config file at "{}"
 """.format(
             CONFIG_FILEPATH
+        ),
+    )
+    add_bool_argument(
+        parser,
+        "a",
+        "abort-on-error",
+        help="abort if the executed command exits with a non-zero exit code",
+    )
+    parser.add_argument(
+        "-c",
+        "--capture",
+        action="store",
+        default=config.capture.text,
+        dest="capture",
+        help=(
+            "set the streams to capture from,"
+            ' as comma-separated list of "stdout" and "stderr" (default: "%(default)s")'
         ),
     )
     parser.add_argument(
@@ -117,6 +144,12 @@ Default values for command line options are taken from the config file at "{}"
         dest="write_default_config",
         help='create a configuration file with default values (config filepath: "{}")'.format(CONFIG_FILEPATH),
     )
+    add_bool_argument(
+        parser,
+        "x",
+        "ignore-output-on-error",
+        help="ignore the output of the executed command if it exits with a non-zero exit code",
+    )
     verbosity_group = parser.add_mutually_exclusive_group()
     verbosity_group.add_argument(
         "-q",
@@ -159,6 +192,7 @@ def parse_arguments() -> argparse.Namespace:
     args = parser.parse_args()
     if args.print_version:
         return args
+    args.capture = CaptureStream.from_text(args.capture)
     args.verbosity_level = (
         Verbosity.QUIET
         if args.quiet
@@ -168,18 +202,14 @@ def parse_arguments() -> argparse.Namespace:
             else (
                 Verbosity.WARN
                 if args.warn
-                else Verbosity.VERBOSE
-                if args.verbose
-                else Verbosity.DEBUG
-                if args.debug
-                else config.verbosity
+                else Verbosity.VERBOSE if args.verbose else Verbosity.DEBUG if args.debug else config.verbosity
             )
         )
     )
     if args.write_default_config:
         return args
     if args.command is None:
-        raise argparse.ArgumentError(None, "No command given")
+        raise argparse.ArgumentError(None, "No command given.")
     return args
 
 
@@ -212,6 +242,9 @@ def handle_monitoring(args: argparse.Namespace) -> None:
                 args.shell,
                 args.run_once,
                 args.interval,
+                args.capture,
+                args.ignore_output_on_error,
+                args.abort_on_error,
             ):
                 if args.print_on_stdout:
                     logger.info("Write command diff to stdout:")
@@ -246,8 +279,13 @@ def handle_monitoring(args: argparse.Namespace) -> None:
 def main() -> None:
     expected_exceptions = (
         argparse.ArgumentError,
+        CalledProcessError,
         MailError,
+        UnknownMailBackendError,
+        UnknownMailEncryptionError,
         LockTimeoutError,
+        UnknownCaptureStreamError,
+        UnknownVerbosityLevelError,
     )
     try:
         args = parse_arguments()
