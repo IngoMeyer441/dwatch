@@ -55,7 +55,7 @@ def get_argumentparser() -> argparse.ArgumentParser:
             default=getattr(config, normalized_long_name),
             dest=normalized_long_name,
             action="store_true",
-            help=help + ' (default: "{}")'.format(getattr(config, normalized_long_name)),
+            help=help + f' (default: "{getattr(config, normalized_long_name)}")',
         )
         flag_names = ["--no-" + long_name]
         if short_name is not None:
@@ -69,12 +69,10 @@ def get_argumentparser() -> argparse.ArgumentParser:
         )
 
     parser = argparse.ArgumentParser(
-        description="""
+        description=f"""
 %(prog)s is a tool for watching command output for changes and notifiying the user.
-Default values for command line options are taken from the config file at "{}"
-""".format(
-            CONFIG_FILEPATH
-        ),
+Default values for command line options are taken from the config file at "{CONFIG_FILEPATH}"
+"""
     )
     add_bool_argument(
         parser,
@@ -141,7 +139,7 @@ Default values for command line options are taken from the config file at "{}"
         "--write-default-config",
         action="store_true",
         dest="write_default_config",
-        help='create a configuration file with default values (config filepath: "{}")'.format(CONFIG_FILEPATH),
+        help=f'create a configuration file with default values (config filepath: "{CONFIG_FILEPATH}")',
     )
     add_bool_argument(
         parser,
@@ -155,32 +153,32 @@ Default values for command line options are taken from the config file at "{}"
         "--quiet",
         action="store_true",
         dest="quiet",
-        help='be quiet (default: "{}")'.format(config.verbosity is Verbosity.QUIET),
+        help=f'be quiet (default: "{config.verbosity is Verbosity.QUIET}")',
     )
     verbosity_group.add_argument(
         "--error",
         action="store_true",
         dest="error",
-        help='print error messages (default: "{}")'.format(config.verbosity is Verbosity.ERROR),
+        help=f'print error messages (default: "{config.verbosity is Verbosity.ERROR}")',
     )
     verbosity_group.add_argument(
         "--warn",
         action="store_true",
         dest="warn",
-        help='print warning and error messages (default: "{}")'.format(config.verbosity is Verbosity.WARN),
+        help=f'print warning and error messages (default: "{config.verbosity is Verbosity.WARN}")',
     )
     verbosity_group.add_argument(
         "-v",
         "--verbose",
         action="store_true",
         dest="verbose",
-        help='be verbose (default: "{}")'.format(config.verbosity is Verbosity.VERBOSE),
+        help=f'be verbose (default: "{config.verbosity is Verbosity.VERBOSE}")',
     )
     verbosity_group.add_argument(
         "--debug",
         action="store_true",
         dest="debug",
-        help='print debug messages (default: "{}")'.format(config.verbosity is Verbosity.DEBUG),
+        help=f'print debug messages (default: "{config.verbosity is Verbosity.DEBUG}")',
     )
     parser.add_argument("command", nargs="?", help="the command to watch")
     return parser
@@ -224,7 +222,7 @@ def setup_stderr_logging(verbosity_level: Verbosity) -> None:
     elif verbosity_level == Verbosity.DEBUG:
         logging.basicConfig(level=logging.DEBUG)
     else:
-        raise NotImplementedError('The verbosity level "{}" is not implemented'.format(verbosity_level))
+        raise NotImplementedError(f'The verbosity level "{verbosity_level}" is not implemented')
     if not verbosity_level == Verbosity.QUIET:
         setup_colored_stderr_logging(format_string="[%(levelname)s] %(message)s")
 
@@ -289,7 +287,7 @@ def main() -> None:
     try:
         args = parse_arguments()
         if args.print_version:
-            print("{}, version {}".format(os.path.basename(sys.argv[0]), __version__))
+            print(f"{os.path.basename(sys.argv[0])}, version {__version__}")
             sys.exit(0)
         if has_setup_colored_exceptions:
             setup_colored_exceptions(True)

@@ -38,8 +38,8 @@ class CaptureStream(Flag):
                 flag |= cls[text_flag.upper()]
             except KeyError as e:
                 raise UnknownCaptureStreamError(
-                    'The capture stream "{}" is unknown.'.format(text_flag)
-                    + ' You can choose from "stdout" or "stderr" or combine them with ",".'
+                    f'The capture stream "{text_flag}" is unknown.'
+                    ' You can choose from "stdout" or "stderr" or combine them with ",".'
                 ) from e
         return flag
 
@@ -95,7 +95,7 @@ def watch(
             json.dump(command_db, f)
 
     def interrupt_handler(sig: int, frame: Optional[FrameType]) -> None:
-        raise Interrupt("Process was interrupted by {}.".format(signal.Signals(sig).name))
+        raise Interrupt(f"Process was interrupted by {signal.Signals(sig).name}.")
 
     original_sigint_handler = signal.signal(signal.SIGINT, interrupt_handler)
     original_sigterm_handler = signal.signal(signal.SIGTERM, interrupt_handler)

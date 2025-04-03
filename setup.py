@@ -39,7 +39,7 @@ if __name__ == "__main__":
             subprocess.check_call(
                 [
                     os.path.join(temp_dir, "env/bin/pyinstaller"),
-                    "--add-data={}{}{}".format(os.path.join("dwatch", "*.jinja.*"), os.pathsep, "dwatch"),
+                    f"--add-data={os.path.join('dwatch', '*.jinja.*')}{os.pathsep}dwatch",
                     "--clean",
                     "--name=dwatch",
                     "--onefile",

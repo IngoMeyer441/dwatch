@@ -99,8 +99,7 @@ class Config:
         backend_string = self._config["mail"]["backend"]
         if backend_string.upper() not in MailBackend.__dict__:
             raise UnknownMailBackendError(
-                'The mail backend "{}" is unknown.'.format(backend_string)
-                + ' You can choose from "sendmail" or "smtplib".'
+                f'The mail backend "{backend_string}" is unknown. You can choose from "sendmail" or "smtplib".'
             )
         return MailBackend[backend_string.upper()]
 
@@ -109,8 +108,8 @@ class Config:
         encryption_string = self._config["mail"]["encryption"]
         if encryption_string.upper() not in MailEncryption.__dict__:
             raise UnknownMailEncryptionError(
-                'The mail encryption "{}" is unknown.'.format(encryption_string)
-                + ' You can choose from "none", "starttls" or "ssl".'
+                f'The mail encryption "{encryption_string}" is unknown.'
+                ' You can choose from "none", "starttls" or "ssl".'
             )
         return MailEncryption[encryption_string.upper()]
 
@@ -139,8 +138,8 @@ class Config:
         verbosity_string = self._config["general"]["verbosity"]
         if verbosity_string.upper() not in Verbosity.__dict__:
             raise UnknownVerbosityLevelError(
-                'The verbosity level "{}" is unknown.'.format(verbosity_string)
-                + ' You can choose from "quiet", "error", "warn", "verbose" or "debug".'
+                f'The verbosity level "{verbosity_string}" is unknown.'
+                ' You can choose from "quiet", "error", "warn", "verbose" or "debug".'
             )
         return Verbosity[verbosity_string.upper()]
 
@@ -157,8 +156,8 @@ class Config:
         for capture_string in capture_string_list.split(","):
             if capture_string.upper() not in CaptureStream.__dict__:
                 raise UnknownCaptureStreamError(
-                    'The capture stream "{}" is unknown.'.format(capture_string)
-                    + ' You can choose from "stdout" or "stderr" or combine them with ",".'
+                    f'The capture stream "{capture_string}" is unknown.'
+                    ' You can choose from "stdout" or "stderr" or combine them with ",".'
                 )
             capture |= CaptureStream[capture_string.upper()]
         return capture
