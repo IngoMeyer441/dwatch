@@ -97,6 +97,9 @@ These options can be configured in the file `~/.dwatchrc`:
 
 - `[watch]` section:
 
+  - `abort_on_error`: If set to `True`, the program will abort if the given command exits with a non-zero exit code.
+  - `capture`: The streams to capture from, as comma-separated list of "stdout" and "stderr".
+  - `ignore_output_on_error`: Ignore the output of the executed command if it exits with a non-zero exit code.
   - `interval`: The time interval in seconds between runs of the given command.
   - `run_once`: If set to `True`, the command will only be run once the program exits. This is intended to be used with
     cron jobs.
@@ -106,8 +109,9 @@ These options can be configured in the file `~/.dwatchrc`:
 ## Command line options
 
 ```text
-usage: dwatch [-h] [-d DESCRIPTION] [-i INTERVAL] [-l | -L] [-o | -O] [-s |
-              -S] [--stdout] [-V] [-w] [-q | --error | --warn | -v | --debug]
+usage: dwatch [-h] [-a | -A] [-c CAPTURE] [-d DESCRIPTION] [-i INTERVAL] [-l |
+              -L] [-o | -O] [-s | -S] [--stdout] [-V] [-w] [-x | -X] [-q |
+              --error | --warn | -v | --debug]
               [command]
 
 dwatch is a tool for watching command output for changes and notifiying the
@@ -119,6 +123,15 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -a, --abort-on-error  abort if the executed command exits with a non-zero
+                        exit code (default: "False")
+  -A, --no-abort-on-error
+                        don't abort if the executed command exits with a non-
+                        zero exit code (default: "True")
+  -c, --capture CAPTURE
+                        set the streams to capture from, as comma-separated
+                        list of "stdout" and "stderr" (default:
+                        "stdout,stderr")
   -d, --description DESCRIPTION
                         add a description which is added to the diff output
                         and used in the e-mail subject
@@ -142,6 +155,12 @@ options:
   -w, --write-default-config
                         create a configuration file with default values
                         (config filepath: "~/.dwatchrc")
+  -x, --ignore-output-on-error
+                        ignore the output of the executed command if it exits
+                        with a non-zero exit code (default: "False")
+  -X, --no-ignore-output-on-error
+                        don't ignore the output of the executed command if it
+                        exits with a non-zero exit code (default: "True")
   -q, --quiet           be quiet (default: "False")
   --error               print error messages (default: "False")
   --warn                print warning and error messages (default: "False")

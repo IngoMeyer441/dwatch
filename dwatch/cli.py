@@ -3,6 +3,7 @@ import logging
 import os
 import shlex
 import sys
+from subprocess import CalledProcessError
 from tempfile import gettempdir
 from typing import Optional
 
@@ -17,9 +18,17 @@ except ImportError:
     has_setup_colored_exceptions = False
 
 from . import __version__
-from .config import CONFIG_FILEPATH, Config, Verbosity, config
+from .config import (
+    CONFIG_FILEPATH,
+    Config,
+    UnknownMailBackendError,
+    UnknownMailEncryptionError,
+    UnknownVerbosityLevelError,
+    Verbosity,
+    config,
+)
 from .mail import MailError, send_mail
-from .monitor import watch
+from .monitor import CaptureStream, UnknownCaptureStreamError, watch
 from .render import TemplateType, render_template
 
 LOCK_FILENAME = "dwatch.lock"
@@ -46,7 +55,7 @@ def get_argumentparser() -> argparse.ArgumentParser:
             default=getattr(config, normalized_long_name),
             dest=normalized_long_name,
             action="store_true",
-            help=help + ' (default: "{}")'.format(getattr(config, normalized_long_name)),
+            help=help + f' (default: "{getattr(config, normalized_long_name)}")',
         )
         flag_names = ["--no-" + long_name]
         if short_name is not None:
@@ -60,11 +69,26 @@ def get_argumentparser() -> argparse.ArgumentParser:
         )
 
     parser = argparse.ArgumentParser(
-        description="""
+        description=f"""
 %(prog)s is a tool for watching command output for changes and notifiying the user.
-Default values for command line options are taken from the config file at "{}"
-""".format(
-            CONFIG_FILEPATH
+Default values for command line options are taken from the config file at "{CONFIG_FILEPATH}"
+"""
+    )
+    add_bool_argument(
+        parser,
+        "a",
+        "abort-on-error",
+        help="abort if the executed command exits with a non-zero exit code",
+    )
+    parser.add_argument(
+        "-c",
+        "--capture",
+        action="store",
+        default=config.capture.text,
+        dest="capture",
+        help=(
+            "set the streams to capture from,"
+            ' as comma-separated list of "stdout" and "stderr" (default: "%(default)s")'
         ),
     )
     parser.add_argument(
@@ -115,7 +139,13 @@ Default values for command line options are taken from the config file at "{}"
         "--write-default-config",
         action="store_true",
         dest="write_default_config",
-        help='create a configuration file with default values (config filepath: "{}")'.format(CONFIG_FILEPATH),
+        help=f'create a configuration file with default values (config filepath: "{CONFIG_FILEPATH}")',
+    )
+    add_bool_argument(
+        parser,
+        "x",
+        "ignore-output-on-error",
+        help="ignore the output of the executed command if it exits with a non-zero exit code",
     )
     verbosity_group = parser.add_mutually_exclusive_group()
     verbosity_group.add_argument(
@@ -123,32 +153,32 @@ Default values for command line options are taken from the config file at "{}"
         "--quiet",
         action="store_true",
         dest="quiet",
-        help='be quiet (default: "{}")'.format(config.verbosity is Verbosity.QUIET),
+        help=f'be quiet (default: "{config.verbosity is Verbosity.QUIET}")',
     )
     verbosity_group.add_argument(
         "--error",
         action="store_true",
         dest="error",
-        help='print error messages (default: "{}")'.format(config.verbosity is Verbosity.ERROR),
+        help=f'print error messages (default: "{config.verbosity is Verbosity.ERROR}")',
     )
     verbosity_group.add_argument(
         "--warn",
         action="store_true",
         dest="warn",
-        help='print warning and error messages (default: "{}")'.format(config.verbosity is Verbosity.WARN),
+        help=f'print warning and error messages (default: "{config.verbosity is Verbosity.WARN}")',
     )
     verbosity_group.add_argument(
         "-v",
         "--verbose",
         action="store_true",
         dest="verbose",
-        help='be verbose (default: "{}")'.format(config.verbosity is Verbosity.VERBOSE),
+        help=f'be verbose (default: "{config.verbosity is Verbosity.VERBOSE}")',
     )
     verbosity_group.add_argument(
         "--debug",
         action="store_true",
         dest="debug",
-        help='print debug messages (default: "{}")'.format(config.verbosity is Verbosity.DEBUG),
+        help=f'print debug messages (default: "{config.verbosity is Verbosity.DEBUG}")',
     )
     parser.add_argument("command", nargs="?", help="the command to watch")
     return parser
@@ -159,6 +189,7 @@ def parse_arguments() -> argparse.Namespace:
     args = parser.parse_args()
     if args.print_version:
         return args
+    args.capture = CaptureStream.from_text(args.capture)
     args.verbosity_level = (
         Verbosity.QUIET
         if args.quiet
@@ -168,18 +199,14 @@ def parse_arguments() -> argparse.Namespace:
             else (
                 Verbosity.WARN
                 if args.warn
-                else Verbosity.VERBOSE
-                if args.verbose
-                else Verbosity.DEBUG
-                if args.debug
-                else config.verbosity
+                else Verbosity.VERBOSE if args.verbose else Verbosity.DEBUG if args.debug else config.verbosity
             )
         )
     )
     if args.write_default_config:
         return args
     if args.command is None:
-        raise argparse.ArgumentError(None, "No command given")
+        raise argparse.ArgumentError(None, "No command given.")
     return args
 
 
@@ -195,7 +222,7 @@ def setup_stderr_logging(verbosity_level: Verbosity) -> None:
     elif verbosity_level == Verbosity.DEBUG:
         logging.basicConfig(level=logging.DEBUG)
     else:
-        raise NotImplementedError('The verbosity level "{}" is not implemented'.format(verbosity_level))
+        raise NotImplementedError(f'The verbosity level "{verbosity_level}" is not implemented')
     if not verbosity_level == Verbosity.QUIET:
         setup_colored_stderr_logging(format_string="[%(levelname)s] %(message)s")
 
@@ -212,6 +239,9 @@ def handle_monitoring(args: argparse.Namespace) -> None:
                 args.shell,
                 args.run_once,
                 args.interval,
+                args.capture,
+                args.ignore_output_on_error,
+                args.abort_on_error,
             ):
                 if args.print_on_stdout:
                     logger.info("Write command diff to stdout:")
@@ -246,13 +276,18 @@ def handle_monitoring(args: argparse.Namespace) -> None:
 def main() -> None:
     expected_exceptions = (
         argparse.ArgumentError,
+        CalledProcessError,
         MailError,
+        UnknownMailBackendError,
+        UnknownMailEncryptionError,
         LockTimeoutError,
+        UnknownCaptureStreamError,
+        UnknownVerbosityLevelError,
     )
     try:
         args = parse_arguments()
         if args.print_version:
-            print("{}, version {}".format(os.path.basename(sys.argv[0]), __version__))
+            print(f"{os.path.basename(sys.argv[0])}, version {__version__}")
             sys.exit(0)
         if has_setup_colored_exceptions:
             setup_colored_exceptions(True)

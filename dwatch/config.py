@@ -4,6 +4,7 @@ from enum import Enum, auto
 from typing import Any, Dict, List, Optional, TextIO, Union
 
 from .mail import MailBackend, MailEncryption
+from .monitor import CaptureStream, UnknownCaptureStreamError
 
 CONFIG_FILEPATH = "~/.dwatchrc"
 
@@ -44,6 +45,9 @@ class Config:
             "to_addresses": "admin@example.com",
         },
         "watch": {
+            "abort_on_error": False,
+            "capture": "stdout,stderr",
+            "ignore_output_on_error": False,
             "interval": 60.0,
             "run_once": False,
             "shell": False,
@@ -95,8 +99,7 @@ class Config:
         backend_string = self._config["mail"]["backend"]
         if backend_string.upper() not in MailBackend.__dict__:
             raise UnknownMailBackendError(
-                'The mail backend "{}" is unknown.'.format(backend_string)
-                + ' You can choose from "sendmail" or "smtplib".'
+                f'The mail backend "{backend_string}" is unknown. You can choose from "sendmail" or "smtplib".'
             )
         return MailBackend[backend_string.upper()]
 
@@ -105,8 +108,8 @@ class Config:
         encryption_string = self._config["mail"]["encryption"]
         if encryption_string.upper() not in MailEncryption.__dict__:
             raise UnknownMailEncryptionError(
-                'The mail encryption "{}" is unknown.'.format(encryption_string)
-                + ' You can choose from "none", "starttls" or "ssl".'
+                f'The mail encryption "{encryption_string}" is unknown.'
+                ' You can choose from "none", "starttls" or "ssl".'
             )
         return MailEncryption[encryption_string.upper()]
 
@@ -135,26 +138,53 @@ class Config:
         verbosity_string = self._config["general"]["verbosity"]
         if verbosity_string.upper() not in Verbosity.__dict__:
             raise UnknownVerbosityLevelError(
-                'The verbosity level "{}" is unknown.'.format(verbosity_string)
-                + ' You can choose from "quiet", "error", "warn", "verbose" or "debug".'
+                f'The verbosity level "{verbosity_string}" is unknown.'
+                ' You can choose from "quiet", "error", "warn", "verbose" or "debug".'
             )
         return Verbosity[verbosity_string.upper()]
 
     @property
+    def abort_on_error(self) -> bool:
+        return self._config["watch"].getboolean(
+            "abort_on_error", fallback=self._default_config["watch"]["abort_on_error"]
+        )
+
+    @property
+    def capture(self) -> CaptureStream:
+        capture_string_list = self._config["watch"]["capture"]
+        capture = CaptureStream(0)
+        for capture_string in capture_string_list.split(","):
+            if capture_string.upper() not in CaptureStream.__dict__:
+                raise UnknownCaptureStreamError(
+                    f'The capture stream "{capture_string}" is unknown.'
+                    ' You can choose from "stdout" or "stderr" or combine them with ",".'
+                )
+            capture |= CaptureStream[capture_string.upper()]
+        return capture
+
+    @property
+    def ignore_output_on_error(self) -> bool:
+        return self._config["watch"].getboolean(
+            "ignore_output_on_error", fallback=self._default_config["watch"]["ignore_output_on_error"]
+        )
+
+    @property
     def interval(self) -> float:
-        return self._config["watch"].getfloat("interval")
+        return self._config["watch"].getfloat("interval", fallback=self._default_config["watch"]["interval"])
 
     @property
     def run_once(self) -> bool:
-        return self._config["watch"].getboolean("run_once")
+        return self._config["watch"].getboolean("run_once", fallback=self._default_config["watch"]["run_once"])
 
     @property
     def shell(self) -> bool:
-        return self._config["watch"].getboolean("shell")
+        return self._config["watch"].getboolean("shell", fallback=self._default_config["watch"]["shell"])
 
     @property
     def wait_for_lock(self) -> bool:
-        return self._config["general"].getboolean("wait_for_lock")
+        return self._config["general"].getboolean(
+            "wait_for_lock", fallback=self._default_config["general"]["wait_for_lock"]
+        )
 
 
 config = Config()
