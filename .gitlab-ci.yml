@@ -16,7 +16,7 @@ pre-commit:
     paths:
     - .cache
   before_script:
-  - pip install "pre-commit==3.3.2"
+  - pip install "pre-commit==4.2.0"
   script:
   - TMP_MSG_FILE="$(mktemp)"
   - git log -1 --pretty=%B > "${TMP_MSG_FILE}"
@@ -24,7 +24,7 @@ pre-commit:
       --all-files
       --color=always
       --show-diff-on-failure
-      --hook-stage commit &&
+      --hook-stage pre-commit &&
     pre-commit run
       --all-files
       --color=always

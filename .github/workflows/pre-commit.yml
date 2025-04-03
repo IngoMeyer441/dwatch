@@ -10,7 +10,7 @@ jobs:
     - name: Add the project directory to safe directories in Git
       run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
     - name: Install pre-commit
-      run: pip install "pre-commit==3.3.2"
+      run: pip install "pre-commit==4.2.0"
     - name: Run pre-commit checks
       run: |
         TMP_MSG_FILE="$(mktemp)" &&
@@ -19,7 +19,7 @@ jobs:
           --all-files \
           --color=always \
           --show-diff-on-failure \
-          --hook-stage commit &&
+          --hook-stage pre-commit &&
         pre-commit run \
           --all-files \
           --color=always \
