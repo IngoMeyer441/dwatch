@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 import signal
 import zlib
@@ -12,6 +13,9 @@ from typing import Generator, NamedTuple, Optional, Sequence, Tuple
 
 DEFAULT_INTERVAL = 60.0  # seconds
 ORIGINAL_COMMAND_OUTPUT_FILEPATH = os.path.expanduser("~/.dwatch_command_output.json")
+
+
+logger = logging.getLogger(__name__)
 
 
 class UnknownCaptureStreamError(Exception):
@@ -106,6 +110,9 @@ def watch(
                 shell=shell,
                 text=True,
             )
+            logger.debug("Command return code: %s", command_result.returncode)
+            logger.debug("Command stdout: %s", command_result.stdout)
+            logger.debug("Command stderr: %s", command_result.stderr)
             if command_result.returncode == 0 or not ignore_output_on_error:
                 current_output = CommandOutput(
                     (
