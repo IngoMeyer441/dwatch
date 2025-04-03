@@ -41,7 +41,7 @@ class CaptureStream(Flag):
 
     @property
     def text(self) -> str:
-        return ','.join(flag.name.lower() for flag in self)
+        return ",".join(str(flag.name).lower() for flag in self)
 
 
 class CommandOutput(NamedTuple):

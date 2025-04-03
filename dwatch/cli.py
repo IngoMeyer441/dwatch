@@ -3,12 +3,12 @@ import logging
 import os
 import shlex
 import sys
+from subprocess import CalledProcessError
 from tempfile import gettempdir
 from typing import Optional
 
 from filelock import FileLock, Timeout
 from yacl import setup_colored_stderr_logging
-from subprocess import CalledProcessError
 
 try:
     from yacl import setup_colored_exceptions
@@ -21,7 +21,6 @@ from . import __version__
 from .config import (
     CONFIG_FILEPATH,
     Config,
-    UnknownCaptureStreamError,
     UnknownMailBackendError,
     UnknownMailEncryptionError,
     UnknownVerbosityLevelError,

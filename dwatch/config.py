@@ -146,7 +146,9 @@ class Config:
 
     @property
     def abort_on_error(self) -> bool:
-        return self._config["watch"].getboolean("abort_on_error")
+        return self._config["watch"].getboolean(
+            "abort_on_error", fallback=self._default_config["watch"]["abort_on_error"]
+        )
 
     @property
     def capture(self) -> CaptureStream:
@@ -163,23 +165,27 @@ class Config:
 
     @property
     def ignore_output_on_error(self) -> bool:
-        return self._config["watch"].getboolean("ignore_output_on_error")
+        return self._config["watch"].getboolean(
+            "ignore_output_on_error", fallback=self._default_config["watch"]["ignore_output_on_error"]
+        )
 
     @property
     def interval(self) -> float:
-        return self._config["watch"].getfloat("interval")
+        return self._config["watch"].getfloat("interval", fallback=self._default_config["watch"]["interval"])
 
     @property
     def run_once(self) -> bool:
-        return self._config["watch"].getboolean("run_once")
+        return self._config["watch"].getboolean("run_once", fallback=self._default_config["watch"]["run_once"])
 
     @property
     def shell(self) -> bool:
-        return self._config["watch"].getboolean("shell")
+        return self._config["watch"].getboolean("shell", fallback=self._default_config["watch"]["shell"])
 
     @property
     def wait_for_lock(self) -> bool:
-        return self._config["general"].getboolean("wait_for_lock")
+        return self._config["general"].getboolean(
+            "wait_for_lock", fallback=self._default_config["general"]["wait_for_lock"]
+        )
 
 
 config = Config()
